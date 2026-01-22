@@ -1,1 +1,28 @@
-run: python scripts/market_sync.py
+name: Market Data Daily Sync
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # S'exécute chaque jour à minuit
+  workflow_dispatch: # Permet de le lancer manuellement
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install yfinance supabase python-dotenv
+
+      - name: Run sync script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/market_sync.py
