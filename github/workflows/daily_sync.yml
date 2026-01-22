@@ -1,0 +1,1 @@
+run: python scripts/market_sync.py
