@@ -26,7 +26,8 @@ def sync():
     print("🔍 Récupération de la liste des assets depuis Supabase...")
     try:
         response = supabase.table("Financial_Data").select("asset_symbol, asset_name, asset_currency").execute()
-        
+        print(f"DEBUG - Status Code: {response.status_code if hasattr(response, 'status_code') else 'N/A'}")
+        print(f"DEBUG - Data reçue: {response.data}")
         # Création d'un dictionnaire pour mapper les infos par symbole
         assets_to_update = {item['asset_symbol']: item for item in response.data}
         tickers = list(assets_to_update.keys())
