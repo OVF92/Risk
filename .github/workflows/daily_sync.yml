@@ -2,7 +2,7 @@ name: Market Data Daily Sync
 
 on:
   schedule:
-    - cron: '0 0 * * *' # S'exécute chaque jour à minuit
+     - cron: '*/5 * * * *' # S'exécute chaque jour à minuit
   workflow_dispatch: # Permet de le lancer manuellement
 
 jobs:
