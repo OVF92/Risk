@@ -7,6 +7,7 @@ interface AssetPrice {
   price_date: string;
   close_price: number;
   daily_return: number | null;
+  asset_currency?: string;
 }
 
 export default function VarCalculator() {
@@ -17,9 +18,10 @@ export default function VarCalculator() {
   const [endDate, setEndDate] = useState<string>('2026-01-20');
   const [capital, setCapital] = useState<number>(35000);
   const [confidence, setConfidence] = useState<number>(95);
+  const [currency, setCurrency] = useState<string>('EUR'); // ← NOUVEAU
   
   const [varResult, setVarResult] = useState<number | null>(null);
-  const [esResult, setEsResult] = useState<number | null>(null); // ← NOUVEAU
+  const [esResult, setEsResult] = useState<number | null>(null);
   const [volatility, setVolatility] = useState<number | null>(null);
   const [worstReturn, setWorstReturn] = useState<number | null>(null);
   const [bestReturn, setBestReturn] = useState<number | null>(null);
@@ -61,7 +63,7 @@ export default function VarCalculator() {
       console.log('  End:', endDate);
       
       // Récupérer TOUTES les données en plusieurs batch
-      let allReturns: any[] = [];
+      let allReturns: AssetPrice[] = [];
       let from = 0;
       const batchSize = 1000;
       let hasMore = true;
@@ -69,7 +71,7 @@ export default function VarCalculator() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('Financial_Data')
-          .select('price_date, daily_return')
+          .select('price_date, daily_return, asset_currency') // ← Ajoute asset_currency
           .eq('asset_name', selectedAsset)
           .gte('price_date', startDate)
           .lte('price_date', endDate)
@@ -104,6 +106,12 @@ export default function VarCalculator() {
         return;
       }
 
+      // ← NOUVEAU : Récupérer la devise du premier enregistrement
+      if (allReturns[0]?.asset_currency) {
+        setCurrency(allReturns[0].asset_currency);
+        console.log('💱 Devise:', allReturns[0].asset_currency);
+      }
+
       // Extraire les log returns
       const returnValues = allReturns.map(r => r.daily_return as number);
       
@@ -119,7 +127,6 @@ export default function VarCalculator() {
       const varAmount = varLogReturn * capital;
 
       // 2. Calculer l'Expected Shortfall (ES / CVaR)
-      // ES = moyenne de tous les returns <= VaR
       const returnsWorseThanVar = sortedReturns.slice(0, percentileIndex + 1);
       const esLogReturn = returnsWorseThanVar.reduce((sum, r) => sum + r, 0) / returnsWorseThanVar.length;
       const esAmount = esLogReturn * capital;
@@ -142,7 +149,7 @@ export default function VarCalculator() {
 
       // Mise à jour des résultats
       setVarResult(varAmount);
-      setEsResult(esAmount); // ← NOUVEAU
+      setEsResult(esAmount);
       setVolatility(annualVol);
       setWorstReturn(worstDay * 100);
       setBestReturn(bestDay * 100);
@@ -225,7 +232,7 @@ export default function VarCalculator() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Capital investi (€)
+                Capital investi
               </label>
               <input
                 type="number"
@@ -286,7 +293,7 @@ export default function VarCalculator() {
                   <div className={`text-3xl font-bold mb-2 ${varResult < 0 ? 'text-red-600' : 'text-green-600'}`}>
                     {varResult.toLocaleString('fr-FR', { 
                       style: 'currency', 
-                      currency: 'EUR',
+                      currency: currency, // ← Utilise la devise dynamique
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2 
                     })}
@@ -304,7 +311,7 @@ export default function VarCalculator() {
                   <div className={`text-3xl font-bold mb-2 ${esResult && esResult < 0 ? 'text-orange-700' : 'text-green-600'}`}>
                     {esResult?.toLocaleString('fr-FR', { 
                       style: 'currency', 
-                      currency: 'EUR',
+                      currency: currency, // ← Utilise la devise dynamique
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2 
                     })}
