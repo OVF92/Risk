@@ -2,8 +2,8 @@ name: Market Data Daily Sync
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Toutes les 5 minutes (pour test)
-  workflow_dispatch:  # Permet de lancer manuellement
+    - cron: '0 0 * * *'  # Tous les jours à 00h00 UTC (01h00 Paris)
+  workflow_dispatch:
 
 jobs:
   build:
@@ -25,5 +25,3 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/market_sync.py
-         
-
